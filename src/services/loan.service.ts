@@ -54,8 +54,9 @@ export const loanService = {
         totalPages: Math.ceil(response.length / (filters.size ?? 10)),
       };
     }
+  
 
-    // Case 3: Backend returns { data: [...], total, ... } format directly
+    // Case 3: Backend returns { data: [...], total, ... } format directly  
     if (response && Array.isArray(response.data)) {
       return {
         data: response.data,
