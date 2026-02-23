@@ -11,12 +11,13 @@ import { formatDate, formatPhoneNumber } from '@/utils/helpers';
 import { ROUTES } from '@/utils/constants';
 
 export const CustomersPage = () => {
-  const [page, setPage] = useState(1);
+  // Use 0-indexed pages to match Spring Boot backend
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
-  
-  // Debounce search could be added here, but for now direct state pass
-  const { data, isLoading } = useCustomers({ page, limit: 10, status, search });
+
+  const { data, isLoading } = useCustomers({ page, limit: pageSize, status, search });
   const { canCreateCustomer } = usePermissions();
 
   if (isLoading) {
@@ -41,6 +42,22 @@ export const CustomersPage = () => {
       default:
         return status ? <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">{status}</span> : null;
     }
+  };
+
+  // Reset to first page when search or status changes
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(0);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatus(value);
+    setPage(0);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(0);
   };
 
   return (
@@ -72,14 +89,14 @@ export const CustomersPage = () => {
                 type="search"
                 placeholder="Search customers..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div className="flex items-center space-x-2">
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={(e) => handleStatusChange(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">All Status</option>
@@ -155,34 +172,48 @@ export const CustomersPage = () => {
                 </TableBody>
               </Table>
 
-              {data && data.totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-                  <div className="text-sm text-gray-600">
-                    Showing {(page - 1) * 10 + 1} to {Math.min(page * 10, data.total)} of {data.total} customers
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(page - 1)}
-                      disabled={page === 1}
+              {/* Pagination — always visible when there are customers */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-600">
+                    Showing page {page + 1} of {data?.totalPages || 1} ({data?.total || customers.length} total customers)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">Per page:</span>
+                    <select
+                      className="border border-gray-300 rounded px-2 py-1 text-sm"
+                      value={pageSize}
+                      onChange={(e) => handlePageSizeChange(Number(e.target.value))}
                     >
-                      Previous
-                    </Button>
-                    <span className="text-sm text-gray-600">
-                      Page {page} of {data.totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(page + 1)}
-                      disabled={page === data.totalPages}
-                    >
-                      Next
-                    </Button>
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
                   </div>
                 </div>
-              )}
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(Math.max(0, page - 1))}
+                    disabled={page === 0}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {page + 1} of {data?.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page + 1)}
+                    disabled={page >= (data?.totalPages ?? 1) - 1}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
             </>
           )}
         </CardContent>

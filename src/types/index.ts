@@ -245,6 +245,7 @@ export interface DashboardStats {
   totalDisbursed: number;
   pendingApprovals: number;
   defaultedLoans: number;
+  totalLoanOfficers: number;
 }
 
 export interface ApiError {

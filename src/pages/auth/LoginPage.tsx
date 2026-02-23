@@ -3,10 +3,9 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth.store';
-import { authService, UserType } from '@/services/auth.service';
+import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { LoginCredentials } from '@/types';
 import { ROUTES } from '@/utils/constants';
 import logo from '@/assets/logo.png';
@@ -17,12 +16,6 @@ export const LoginPage = () => {
   const { setUser, setError } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [userType, setUserType] = useState<UserType>('admin');
-
-  const userTypeOptions = [
-    { value: 'admin', label: 'Administrator' },
-    { value: 'loan-officer', label: 'Loan Officer' },
-  ];
 
   const {
     register,
@@ -36,8 +29,8 @@ export const LoginPage = () => {
     setError(null);
 
     try {
-      console.log('Attempting login with:', { username: data.username, userType });
-      const response = await authService.login(data, userType);
+      console.log('Attempting login with:', { username: data.username });
+      const response = await authService.login(data);
       
       // Clear any cached data from previous sessions or failed attempts
       queryClient.clear();
@@ -74,12 +67,6 @@ export const LoginPage = () => {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <Select
-          label="Login As"
-          options={userTypeOptions}
-          value={userType}
-          onChange={(e) => setUserType(e.target.value as UserType)}
-        />
 
         <Input
           label="Username"
