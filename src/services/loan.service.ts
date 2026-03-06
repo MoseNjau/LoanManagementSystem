@@ -12,6 +12,26 @@ import {
 } from '@/types';
 
 export const loanService = {
+  normalizeLoan(rawLoan: any): LoanDetail {
+    if (!rawLoan) return rawLoan;
+
+    const normalizedArrears = rawLoan.arrears ?? rawLoan.arrearsAmount ?? 0;
+    const normalizedTotalRepaid = rawLoan.totalRepaid ?? rawLoan.totalPaid ?? 0;
+
+    return {
+      ...rawLoan,
+      arrears: normalizedArrears,
+      arrearsAmount: rawLoan.arrearsAmount ?? normalizedArrears,
+      totalRepaid: normalizedTotalRepaid,
+      totalPaid: rawLoan.totalPaid ?? normalizedTotalRepaid,
+      totalAmount: rawLoan.totalAmount ?? rawLoan.totalLoanAmount,
+    } as LoanDetail;
+  },
+
+  normalizeLoans(rawLoans: any[]): LoanDetail[] {
+    return (rawLoans || []).map((loan) => this.normalizeLoan(loan));
+  },
+
   async getLoans(filters: LoanFilters): Promise<PaginatedResponse<LoanDetail>> {
     const params = new URLSearchParams();
 
@@ -35,35 +55,38 @@ export const loanService = {
 
     // Case 1: Spring Boot Page object (most common for GET /loans)
     if (response && response.content && Array.isArray(response.content)) {
+      const normalized = this.normalizeLoans(response.content);
       return {
-        data: response.content,
-        total: response.totalElements ?? response.content.length,
+        data: normalized,
+        total: response.totalElements ?? normalized.length,
         page: response.number ?? 0,
         limit: response.size ?? filters.size ?? 10,
-        totalPages: response.totalPages ?? Math.ceil((response.totalElements ?? response.content.length) / (response.size ?? filters.size ?? 10)),
+        totalPages: response.totalPages ?? Math.ceil((response.totalElements ?? normalized.length) / (response.size ?? filters.size ?? 10)),
       };
     }
 
     // Case 2: Backend returns a plain array (no pagination wrapper)
     if (Array.isArray(response)) {
+      const normalized = this.normalizeLoans(response);
       return {
-        data: response,
-        total: response.length,
+        data: normalized,
+        total: normalized.length,
         page: filters.page ?? 0,
         limit: filters.size ?? 10,
-        totalPages: Math.ceil(response.length / (filters.size ?? 10)),
+        totalPages: Math.ceil(normalized.length / (filters.size ?? 10)),
       };
     }
   
 
     // Case 3: Backend returns { data: [...], total, ... } format directly  
     if (response && Array.isArray(response.data)) {
+      const normalized = this.normalizeLoans(response.data);
       return {
-        data: response.data,
-        total: response.total ?? response.data.length,
+        data: normalized,
+        total: response.total ?? normalized.length,
         page: response.page ?? filters.page ?? 0,
         limit: response.limit ?? response.size ?? filters.size ?? 10,
-        totalPages: response.totalPages ?? Math.ceil((response.total ?? response.data.length) / (response.limit ?? filters.size ?? 10)),
+        totalPages: response.totalPages ?? Math.ceil((response.total ?? normalized.length) / (response.limit ?? filters.size ?? 10)),
       };
     }
 
@@ -80,7 +103,7 @@ export const loanService = {
 
   async getLoanById(id: number): Promise<LoanDetail> {
     const response = await httpClient.get<LoanDetail>(`/loans/${id}`);
-    return response;
+    return this.normalizeLoan(response);
   },
 
   async createLoan(data: CreateLoanDTO): Promise<LoanDetail> {
@@ -116,7 +139,7 @@ export const loanService = {
 
   async getCustomerActiveLoans(customerId: number): Promise<LoanDetail[]> {
     const response = await httpClient.get<LoanDetail[]>(`/customers/${customerId}/active-loans`);
-    return Array.isArray(response) ? response : [];
+    return Array.isArray(response) ? this.normalizeLoans(response) : [];
   },
 
   async getLoanSummary(loanReference: string): Promise<any> {
@@ -125,7 +148,7 @@ export const loanService = {
     const list = Array.isArray(response)
       ? response
       : (response?.content || response?.data || []);
-    return list[0] || null;
+    return list[0] ? this.normalizeLoan(list[0]) : null;
   },
 
   async getStatementRepayments(loanId: number): Promise<LoanRepayment[]> {

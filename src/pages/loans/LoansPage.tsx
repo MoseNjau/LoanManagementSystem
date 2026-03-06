@@ -407,7 +407,7 @@ export const LoansPage = () => {
                   const outstandingBalance = loan.outstandingBalance ?? (loan.totalLoanAmount - (loan.totalRepaid || 0));
                   const repaymentPercentage = loan.repaymentPercentage ??
                     (loan.totalLoanAmount ? Math.round(((loan.totalRepaid || (loan.totalLoanAmount - outstandingBalance)) / loan.totalLoanAmount) * 100) : 0);
-                  const arrearsAmount = loan.arrearsAmount ?? 0;
+                  const arrearsAmount = loan.arrears ?? loan.arrearsAmount ?? 0;
 
                   return (
                     <TableRow key={loan.loanId || loan.id || `loan-${index}`}>

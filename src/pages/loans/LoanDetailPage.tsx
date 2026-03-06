@@ -137,6 +137,7 @@ export const LoanDetailPage = () => {
   const repaymentPercentage = loan.repaymentPercentage ?? 
     (loan.totalLoanAmount ? Math.round(((loan.totalRepaid || (loan.totalLoanAmount - outstandingBalance)) / loan.totalLoanAmount) * 100) : 0);
   const totalRepaid = loan.totalRepaid ?? (loan.totalLoanAmount - outstandingBalance);
+  const arrearsAmount = loan.arrears ?? loan.arrearsAmount ?? 0;
 
   return (
     <div>
@@ -269,6 +270,12 @@ export const LoanDetailPage = () => {
               <div className="flex justify-between">
                 <dt className="text-sm text-gray-600">Outstanding Balance:</dt>
                 <dd className="text-sm font-semibold text-error-600">{formatCurrency(outstandingBalance)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm text-gray-600">Arrears:</dt>
+                <dd className={`text-sm font-semibold ${arrearsAmount > 0 ? 'text-error-600' : 'text-gray-900'}`}>
+                  {arrearsAmount > 0 ? formatCurrency(arrearsAmount) : '-'}
+                </dd>
               </div>
               <div className="mt-4">
                 <div className="flex justify-between text-xs text-gray-600 mb-1">
