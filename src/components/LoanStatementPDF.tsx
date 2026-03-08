@@ -249,10 +249,6 @@ const LoanStatementPDF: React.FC<LoanStatementPDFProps> = ({ summary, repayments
             <Text style={styles.summaryLabel}>Principal Amount</Text>
             <Text style={styles.summaryValue}>{formatMoney(summary?.principalAmount)}</Text>
           </View>
-          <View style={styles.summaryBlock}>
-            <Text style={styles.summaryLabel}>Interest</Text>
-            <Text style={styles.summaryValue}>{formatMoney(summary?.interestAmount)}</Text>
-          </View>
           <View style={styles.totalDueBlock}>
             <Text style={styles.summaryLabel}>Total Loan Amount</Text>
             <Text style={styles.summaryValue}>{formatMoney(summary?.totalAmount ?? summary?.totalLoanAmount)}</Text>
